@@ -1,0 +1,59 @@
+syntax = "proto3";
+
+package user_v1;
+
+option go_package = "github.com/oganes5796/instagram-clon/pkg/user_v1;user_v1";
+
+service AuthV1 {
+    rpc Register(RegisterRequest) returns (RegisterResponse);
+    rpc Sigin(SiginRequest) returns (SiginResponse);
+    rpc Sigout(SigoutRequest) returns (SigoutResponse);
+    rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+}
+
+message User {
+    int64 id = 1;
+    UserInfo info = 2;
+    string access_token = 3;
+    string refresh_token = 4;
+}
+
+message UserInfo {
+    string email = 1;
+    string username = 2;
+    string password = 3;
+}
+
+message RegisterRequest {
+    UserInfo info = 1;
+}
+
+message RegisterResponse {
+    int64 user_id = 1;
+}
+
+message SiginRequest {
+    string username = 1;
+    string password = 2;
+}
+
+message SiginResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+}
+
+message SigoutRequest {
+    string user_id = 1;
+}
+
+message SigoutResponse {
+    bool success = 1;
+}
+
+message RefreshTokenRequest {
+    string refresh_token = 1;
+}
+
+message RefreshTokenResponse {
+    string access_token = 1;
+}
