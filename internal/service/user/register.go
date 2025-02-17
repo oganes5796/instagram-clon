@@ -7,17 +7,7 @@ import (
 )
 
 func (s *serv) Register(ctx context.Context, user *domain.UserInfo) (int64, error) {
-	var id int64
-	err := s.txManager.ReadCommitted(ctx, func(ctx context.Context) error {
-		var errTx error
-		id, errTx = s.userRepository.Register(ctx, user)
-		if errTx != nil {
-			return errTx
-		}
-
-		return nil
-	})
-
+	id, err := s.userRepository.Register(ctx, user)
 	if err != nil {
 		return 0, err
 	}
