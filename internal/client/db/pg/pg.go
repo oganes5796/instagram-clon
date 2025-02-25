@@ -3,15 +3,16 @@ package pg
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
+	"go.uber.org/zap"
 
 	"github.com/oganes5796/instagram-clon/internal/client/db"
 	"github.com/oganes5796/instagram-clon/internal/client/db/prettier"
+	"github.com/oganes5796/instagram-clon/internal/logger"
 )
 
 type key string
@@ -108,9 +109,9 @@ func MakeContextTx(ctx context.Context, tx pgx.Tx) context.Context {
 
 func logQuery(ctx context.Context, q db.Query, args ...interface{}) {
 	prettyQuery := prettier.Pretty(q.QueryRaw, prettier.PlaceholderDollar, args...)
-	log.Println(
-		ctx,
-		fmt.Sprintf("sql: %s", q.Name),
-		fmt.Sprintf("query: %s", prettyQuery),
+	logger.Info("SQL query executed",
+		zap.String("ctx", fmt.Sprintf("%v", ctx)), // Приводим `ctx` в строку
+		zap.String("sql", q.Name),
+		zap.String("query", prettyQuery),
 	)
 }

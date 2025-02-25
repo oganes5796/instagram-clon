@@ -28,7 +28,7 @@ local-migration-down:
 	$(LOCAL_BIN)/goose -dir ${MIGRATION_DIR} postgres ${PG_DSN} down -v
 
 sql-show:
-	docker exec -it aaad265446b9 psql -U user -d user-service
+	docker exec -it 28577c9c84e1 psql -U user -d user-service
 
 test:
 	go clean -testcache

@@ -6,9 +6,10 @@ option go_package = "github.com/oganes5796/instagram-clon/pkg/user_v1;user_v1";
 
 service AuthV1 {
     rpc Register(RegisterRequest) returns (RegisterResponse);
-    rpc Sigin(SiginRequest) returns (SiginResponse);
-    rpc Sigout(SigoutRequest) returns (SigoutResponse);
+    rpc Signin(SigninRequest) returns (SigninResponse);
+    rpc Signout(SignoutRequest) returns (SignoutResponse);
     rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+    rpc AccessToken(AccessTokenRequest) returns (AccessTokenResponse);
 }
 
 message User {
@@ -32,21 +33,20 @@ message RegisterResponse {
     int64 user_id = 1;
 }
 
-message SiginRequest {
+message SigninRequest {
     string username = 1;
     string password = 2;
 }
 
-message SiginResponse {
-    string access_token = 1;
-    string refresh_token = 2;
+message SigninResponse {
+    string refresh_token = 1;
 }
 
-message SigoutRequest {
+message SignoutRequest {
     string user_id = 1;
 }
 
-message SigoutResponse {
+message SignoutResponse {
     bool success = 1;
 }
 
@@ -55,5 +55,13 @@ message RefreshTokenRequest {
 }
 
 message RefreshTokenResponse {
+    string refresh_token = 1;
+}
+ 
+message AccessTokenRequest {
+    string refresh_token = 1;
+}
+ 
+message AccessTokenResponse {
     string access_token = 1;
 }

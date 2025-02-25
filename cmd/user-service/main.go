@@ -2,9 +2,10 @@ package main
 
 import (
 	"context"
-	"log"
 
 	"github.com/oganes5796/instagram-clon/internal/app"
+	"github.com/oganes5796/instagram-clon/internal/logger"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -12,11 +13,11 @@ func main() {
 
 	a, err := app.NewApp(ctx)
 	if err != nil {
-		log.Fatalf("failed to init app: %s", err.Error())
+		logger.Fatal("failed to init app:", zap.Error(err))
 	}
 
 	err = a.Run()
 	if err != nil {
-		log.Fatalf("failed to run app: %s", err.Error())
+		logger.Fatal("failed to run app:", zap.Error(err))
 	}
 }

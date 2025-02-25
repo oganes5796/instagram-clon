@@ -2,15 +2,16 @@ package app
 
 import (
 	"context"
-	"log"
 	"net"
 
+	"go.uber.org/zap"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 
 	"github.com/oganes5796/instagram-clon/internal/closer"
 	"github.com/oganes5796/instagram-clon/internal/config"
+	"github.com/oganes5796/instagram-clon/internal/logger"
 	desk "github.com/oganes5796/instagram-clon/pkg/user_v1"
 )
 
@@ -20,6 +21,11 @@ type App struct {
 }
 
 func NewApp(ctx context.Context) (*App, error) {
+	// Инициализируем логгер
+	cfg := config.DefaultConfig() // Можно кастомизировать через ENV
+	logger.InitLogger(cfg)
+	defer logger.Sync() // Закрываем логгер перед выходом
+
 	a := &App{}
 
 	err := a.initDeps(ctx)
@@ -79,7 +85,9 @@ func (a *App) initGRPCServer(ctx context.Context) error {
 }
 
 func (a *App) runGRPCServer() error {
-	log.Printf("GRPC server is running on %s", a.serviceProvider.GRPCConfig().Address())
+	logger.Info("GRPC server is running",
+		zap.String("address", a.serviceProvider.GRPCConfig().Address()),
+	)
 
 	list, err := net.Listen("tcp", a.serviceProvider.GRPCConfig().Address())
 	if err != nil {

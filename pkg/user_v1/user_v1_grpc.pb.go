@@ -23,9 +23,10 @@ const _ = grpc.SupportPackageIsVersion7
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type AuthV1Client interface {
 	Register(ctx context.Context, in *RegisterRequest, opts ...grpc.CallOption) (*RegisterResponse, error)
-	Sigin(ctx context.Context, in *SiginRequest, opts ...grpc.CallOption) (*SiginResponse, error)
-	Sigout(ctx context.Context, in *SigoutRequest, opts ...grpc.CallOption) (*SigoutResponse, error)
+	Signin(ctx context.Context, in *SigninRequest, opts ...grpc.CallOption) (*SigninResponse, error)
+	Signout(ctx context.Context, in *SignoutRequest, opts ...grpc.CallOption) (*SignoutResponse, error)
 	RefreshToken(ctx context.Context, in *RefreshTokenRequest, opts ...grpc.CallOption) (*RefreshTokenResponse, error)
+	AccessToken(ctx context.Context, in *AccessTokenRequest, opts ...grpc.CallOption) (*AccessTokenResponse, error)
 }
 
 type authV1Client struct {
@@ -45,18 +46,18 @@ func (c *authV1Client) Register(ctx context.Context, in *RegisterRequest, opts .
 	return out, nil
 }
 
-func (c *authV1Client) Sigin(ctx context.Context, in *SiginRequest, opts ...grpc.CallOption) (*SiginResponse, error) {
-	out := new(SiginResponse)
-	err := c.cc.Invoke(ctx, "/user_v1.AuthV1/Sigin", in, out, opts...)
+func (c *authV1Client) Signin(ctx context.Context, in *SigninRequest, opts ...grpc.CallOption) (*SigninResponse, error) {
+	out := new(SigninResponse)
+	err := c.cc.Invoke(ctx, "/user_v1.AuthV1/Signin", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *authV1Client) Sigout(ctx context.Context, in *SigoutRequest, opts ...grpc.CallOption) (*SigoutResponse, error) {
-	out := new(SigoutResponse)
-	err := c.cc.Invoke(ctx, "/user_v1.AuthV1/Sigout", in, out, opts...)
+func (c *authV1Client) Signout(ctx context.Context, in *SignoutRequest, opts ...grpc.CallOption) (*SignoutResponse, error) {
+	out := new(SignoutResponse)
+	err := c.cc.Invoke(ctx, "/user_v1.AuthV1/Signout", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -72,14 +73,24 @@ func (c *authV1Client) RefreshToken(ctx context.Context, in *RefreshTokenRequest
 	return out, nil
 }
 
+func (c *authV1Client) AccessToken(ctx context.Context, in *AccessTokenRequest, opts ...grpc.CallOption) (*AccessTokenResponse, error) {
+	out := new(AccessTokenResponse)
+	err := c.cc.Invoke(ctx, "/user_v1.AuthV1/AccessToken", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // AuthV1Server is the server API for AuthV1 service.
 // All implementations must embed UnimplementedAuthV1Server
 // for forward compatibility
 type AuthV1Server interface {
 	Register(context.Context, *RegisterRequest) (*RegisterResponse, error)
-	Sigin(context.Context, *SiginRequest) (*SiginResponse, error)
-	Sigout(context.Context, *SigoutRequest) (*SigoutResponse, error)
+	Signin(context.Context, *SigninRequest) (*SigninResponse, error)
+	Signout(context.Context, *SignoutRequest) (*SignoutResponse, error)
 	RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error)
+	AccessToken(context.Context, *AccessTokenRequest) (*AccessTokenResponse, error)
 	mustEmbedUnimplementedAuthV1Server()
 }
 
@@ -90,14 +101,17 @@ type UnimplementedAuthV1Server struct {
 func (UnimplementedAuthV1Server) Register(context.Context, *RegisterRequest) (*RegisterResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Register not implemented")
 }
-func (UnimplementedAuthV1Server) Sigin(context.Context, *SiginRequest) (*SiginResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Sigin not implemented")
+func (UnimplementedAuthV1Server) Signin(context.Context, *SigninRequest) (*SigninResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Signin not implemented")
 }
-func (UnimplementedAuthV1Server) Sigout(context.Context, *SigoutRequest) (*SigoutResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method Sigout not implemented")
+func (UnimplementedAuthV1Server) Signout(context.Context, *SignoutRequest) (*SignoutResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Signout not implemented")
 }
 func (UnimplementedAuthV1Server) RefreshToken(context.Context, *RefreshTokenRequest) (*RefreshTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RefreshToken not implemented")
+}
+func (UnimplementedAuthV1Server) AccessToken(context.Context, *AccessTokenRequest) (*AccessTokenResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method AccessToken not implemented")
 }
 func (UnimplementedAuthV1Server) mustEmbedUnimplementedAuthV1Server() {}
 
@@ -130,38 +144,38 @@ func _AuthV1_Register_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthV1_Sigin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SiginRequest)
+func _AuthV1_Signin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SigninRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthV1Server).Sigin(ctx, in)
+		return srv.(AuthV1Server).Signin(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/user_v1.AuthV1/Sigin",
+		FullMethod: "/user_v1.AuthV1/Signin",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthV1Server).Sigin(ctx, req.(*SiginRequest))
+		return srv.(AuthV1Server).Signin(ctx, req.(*SigninRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
 
-func _AuthV1_Sigout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(SigoutRequest)
+func _AuthV1_Signout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SignoutRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(AuthV1Server).Sigout(ctx, in)
+		return srv.(AuthV1Server).Signout(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/user_v1.AuthV1/Sigout",
+		FullMethod: "/user_v1.AuthV1/Signout",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(AuthV1Server).Sigout(ctx, req.(*SigoutRequest))
+		return srv.(AuthV1Server).Signout(ctx, req.(*SignoutRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -184,6 +198,24 @@ func _AuthV1_RefreshToken_Handler(srv interface{}, ctx context.Context, dec func
 	return interceptor(ctx, in, info, handler)
 }
 
+func _AuthV1_AccessToken_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(AccessTokenRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(AuthV1Server).AccessToken(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/user_v1.AuthV1/AccessToken",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(AuthV1Server).AccessToken(ctx, req.(*AccessTokenRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // AuthV1_ServiceDesc is the grpc.ServiceDesc for AuthV1 service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -196,16 +228,20 @@ var AuthV1_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _AuthV1_Register_Handler,
 		},
 		{
-			MethodName: "Sigin",
-			Handler:    _AuthV1_Sigin_Handler,
+			MethodName: "Signin",
+			Handler:    _AuthV1_Signin_Handler,
 		},
 		{
-			MethodName: "Sigout",
-			Handler:    _AuthV1_Sigout_Handler,
+			MethodName: "Signout",
+			Handler:    _AuthV1_Signout_Handler,
 		},
 		{
 			MethodName: "RefreshToken",
 			Handler:    _AuthV1_RefreshToken_Handler,
+		},
+		{
+			MethodName: "AccessToken",
+			Handler:    _AuthV1_AccessToken_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

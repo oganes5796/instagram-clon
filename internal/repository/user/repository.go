@@ -7,6 +7,8 @@ import (
 	"github.com/oganes5796/instagram-clon/internal/client/db"
 	"github.com/oganes5796/instagram-clon/internal/domain"
 	"github.com/oganes5796/instagram-clon/internal/repository"
+	"github.com/oganes5796/instagram-clon/internal/repository/user/converter"
+	"github.com/oganes5796/instagram-clon/internal/repository/user/model"
 )
 
 const (
@@ -50,4 +52,29 @@ func (r *repo) Register(ctx context.Context, user *domain.UserInfo) (int64, erro
 	}
 
 	return id, nil
+}
+
+func (r *repo) GetUser(ctx context.Context, username, password string) (*domain.User, error) {
+	builder := sq.Select("id").
+		PlaceholderFormat(sq.Dollar).
+		From(tableName).
+		Where(sq.Eq{"username": username, "password": password})
+
+	query, args, err := builder.ToSql()
+	if err != nil {
+		return nil, err
+	}
+
+	q := db.Query{
+		Name:     "user_repository.Get",
+		QueryRaw: query,
+	}
+
+	var user model.User
+	err = r.db.DB().QueryRowContext(ctx, q, args...).Scan(&user.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return converter.TouserFromRepo(&user), nil
 }
