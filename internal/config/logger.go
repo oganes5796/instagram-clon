@@ -1,6 +1,5 @@
 package config
 
-// Config содержит настройки логгера
 type LoggerConfig struct {
 	LogLevel      string // debug, info, warn, error
 	FilePath      string // путь к файлу логов
