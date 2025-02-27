@@ -8,5 +8,6 @@ const (
 
 type UserClaims struct {
 	jwt.StandardClaims
-	UserId int64 `json:"user_id"`
+	Username string `json:"username"`
+	Password string `json:"password"`
 }
