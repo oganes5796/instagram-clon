@@ -10,7 +10,7 @@ import (
 	"github.com/oganes5796/instagram-clon/internal/config"
 	"github.com/oganes5796/instagram-clon/internal/logger"
 	"github.com/oganes5796/instagram-clon/internal/repository"
-	userReposirory "github.com/oganes5796/instagram-clon/internal/repository/user"
+	userReposirory "github.com/oganes5796/instagram-clon/internal/repository/user/pg"
 	"github.com/oganes5796/instagram-clon/internal/service"
 	userService "github.com/oganes5796/instagram-clon/internal/service/user"
 
