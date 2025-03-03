@@ -1,6 +1,10 @@
 package user
 
 import (
+	"crypto/sha1"
+	"fmt"
+	"os"
+
 	"github.com/oganes5796/instagram-clon/internal/repository"
 	"github.com/oganes5796/instagram-clon/internal/service"
 )
@@ -28,4 +32,11 @@ func NewMockService(deps ...interface{}) service.UserService {
 	}
 
 	return &srv
+}
+
+func generatePasswordHash(password string) string {
+	hash := sha1.New()
+	hash.Write([]byte(password))
+
+	return fmt.Sprintf("%x", hash.Sum([]byte(os.Getenv("SALT"))))
 }

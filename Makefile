@@ -8,6 +8,7 @@ install-deps:
 
 generate:
 	make generate-user-api
+	make generate-access-api
 
 generate-user-api:
 	mkdir -p pkg/user_v1
@@ -17,6 +18,15 @@ generate-user-api:
 	--go-grpc_out=pkg/user_v1 --go-grpc_opt=paths=source_relative \
 	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
 	api/user_v1/user_v1.proto
+
+generate-access-api:
+	mkdir -p pkg/access_v1
+	protoc --proto_path api/access_v1 \
+	--go_out=pkg/access_v1 --go_opt=paths=source_relative \
+	--plugin=protoc-gen-go=bin/protoc-gen-go \
+	--go-grpc_out=pkg/access_v1 --go-grpc_opt=paths=source_relative \
+	--plugin=protoc-gen-go-grpc=bin/protoc-gen-go-grpc \
+	api/access_v1/access.proto
 
 local-migration-status:
 	$(LOCAL_BIN)/goose -dir ${MIGRATION_DIR} postgres ${PG_DSN} status -v
@@ -28,7 +38,7 @@ local-migration-down:
 	$(LOCAL_BIN)/goose -dir ${MIGRATION_DIR} postgres ${PG_DSN} down -v
 
 sql-show:
-	docker exec -it 28577c9c84e1 psql -U user -d user-service
+	docker exec -it 32ff79ddb737 psql -U user -d user-service
 
 test:
 	go clean -testcache

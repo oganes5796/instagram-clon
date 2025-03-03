@@ -8,5 +8,5 @@ import (
 
 type UserService interface {
 	Register(ctx context.Context, user *domain.UserInfo) (int64, error)
-	Signin(ctx context.Context, username, password string) (*domain.User, error)
+	GenerateToken(ctx context.Context, username, password string) (string, error)
 }

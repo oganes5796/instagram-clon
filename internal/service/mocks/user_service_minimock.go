@@ -19,19 +19,19 @@ type UserServiceMock struct {
 	t          minimock.Tester
 	finishOnce sync.Once
 
+	funcGenerateToken          func(ctx context.Context, username string, password string) (s1 string, err error)
+	funcGenerateTokenOrigin    string
+	inspectFuncGenerateToken   func(ctx context.Context, username string, password string)
+	afterGenerateTokenCounter  uint64
+	beforeGenerateTokenCounter uint64
+	GenerateTokenMock          mUserServiceMockGenerateToken
+
 	funcRegister          func(ctx context.Context, user *domain.UserInfo) (i1 int64, err error)
 	funcRegisterOrigin    string
 	inspectFuncRegister   func(ctx context.Context, user *domain.UserInfo)
 	afterRegisterCounter  uint64
 	beforeRegisterCounter uint64
 	RegisterMock          mUserServiceMockRegister
-
-	funcSignin          func(ctx context.Context, username string, password string) (up1 *domain.User, err error)
-	funcSigninOrigin    string
-	inspectFuncSignin   func(ctx context.Context, username string, password string)
-	afterSigninCounter  uint64
-	beforeSigninCounter uint64
-	SigninMock          mUserServiceMockSignin
 }
 
 // NewUserServiceMock returns a mock for mm_service.UserService
@@ -42,15 +42,389 @@ func NewUserServiceMock(t minimock.Tester) *UserServiceMock {
 		controller.RegisterMocker(m)
 	}
 
+	m.GenerateTokenMock = mUserServiceMockGenerateToken{mock: m}
+	m.GenerateTokenMock.callArgs = []*UserServiceMockGenerateTokenParams{}
+
 	m.RegisterMock = mUserServiceMockRegister{mock: m}
 	m.RegisterMock.callArgs = []*UserServiceMockRegisterParams{}
-
-	m.SigninMock = mUserServiceMockSignin{mock: m}
-	m.SigninMock.callArgs = []*UserServiceMockSigninParams{}
 
 	t.Cleanup(m.MinimockFinish)
 
 	return m
+}
+
+type mUserServiceMockGenerateToken struct {
+	optional           bool
+	mock               *UserServiceMock
+	defaultExpectation *UserServiceMockGenerateTokenExpectation
+	expectations       []*UserServiceMockGenerateTokenExpectation
+
+	callArgs []*UserServiceMockGenerateTokenParams
+	mutex    sync.RWMutex
+
+	expectedInvocations       uint64
+	expectedInvocationsOrigin string
+}
+
+// UserServiceMockGenerateTokenExpectation specifies expectation struct of the UserService.GenerateToken
+type UserServiceMockGenerateTokenExpectation struct {
+	mock               *UserServiceMock
+	params             *UserServiceMockGenerateTokenParams
+	paramPtrs          *UserServiceMockGenerateTokenParamPtrs
+	expectationOrigins UserServiceMockGenerateTokenExpectationOrigins
+	results            *UserServiceMockGenerateTokenResults
+	returnOrigin       string
+	Counter            uint64
+}
+
+// UserServiceMockGenerateTokenParams contains parameters of the UserService.GenerateToken
+type UserServiceMockGenerateTokenParams struct {
+	ctx      context.Context
+	username string
+	password string
+}
+
+// UserServiceMockGenerateTokenParamPtrs contains pointers to parameters of the UserService.GenerateToken
+type UserServiceMockGenerateTokenParamPtrs struct {
+	ctx      *context.Context
+	username *string
+	password *string
+}
+
+// UserServiceMockGenerateTokenResults contains results of the UserService.GenerateToken
+type UserServiceMockGenerateTokenResults struct {
+	s1  string
+	err error
+}
+
+// UserServiceMockGenerateTokenOrigins contains origins of expectations of the UserService.GenerateToken
+type UserServiceMockGenerateTokenExpectationOrigins struct {
+	origin         string
+	originCtx      string
+	originUsername string
+	originPassword string
+}
+
+// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
+// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
+// Optional() makes method check to work in '0 or more' mode.
+// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
+// catch the problems when the expected method call is totally skipped during test run.
+func (mmGenerateToken *mUserServiceMockGenerateToken) Optional() *mUserServiceMockGenerateToken {
+	mmGenerateToken.optional = true
+	return mmGenerateToken
+}
+
+// Expect sets up expected params for UserService.GenerateToken
+func (mmGenerateToken *mUserServiceMockGenerateToken) Expect(ctx context.Context, username string, password string) *mUserServiceMockGenerateToken {
+	if mmGenerateToken.mock.funcGenerateToken != nil {
+		mmGenerateToken.mock.t.Fatalf("UserServiceMock.GenerateToken mock is already set by Set")
+	}
+
+	if mmGenerateToken.defaultExpectation == nil {
+		mmGenerateToken.defaultExpectation = &UserServiceMockGenerateTokenExpectation{}
+	}
+
+	if mmGenerateToken.defaultExpectation.paramPtrs != nil {
+		mmGenerateToken.mock.t.Fatalf("UserServiceMock.GenerateToken mock is already set by ExpectParams functions")
+	}
+
+	mmGenerateToken.defaultExpectation.params = &UserServiceMockGenerateTokenParams{ctx, username, password}
+	mmGenerateToken.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
+	for _, e := range mmGenerateToken.expectations {
+		if minimock.Equal(e.params, mmGenerateToken.defaultExpectation.params) {
+			mmGenerateToken.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmGenerateToken.defaultExpectation.params)
+		}
+	}
+
+	return mmGenerateToken
+}
+
+// ExpectCtxParam1 sets up expected param ctx for UserService.GenerateToken
+func (mmGenerateToken *mUserServiceMockGenerateToken) ExpectCtxParam1(ctx context.Context) *mUserServiceMockGenerateToken {
+	if mmGenerateToken.mock.funcGenerateToken != nil {
+		mmGenerateToken.mock.t.Fatalf("UserServiceMock.GenerateToken mock is already set by Set")
+	}
+
+	if mmGenerateToken.defaultExpectation == nil {
+		mmGenerateToken.defaultExpectation = &UserServiceMockGenerateTokenExpectation{}
+	}
+
+	if mmGenerateToken.defaultExpectation.params != nil {
+		mmGenerateToken.mock.t.Fatalf("UserServiceMock.GenerateToken mock is already set by Expect")
+	}
+
+	if mmGenerateToken.defaultExpectation.paramPtrs == nil {
+		mmGenerateToken.defaultExpectation.paramPtrs = &UserServiceMockGenerateTokenParamPtrs{}
+	}
+	mmGenerateToken.defaultExpectation.paramPtrs.ctx = &ctx
+	mmGenerateToken.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
+
+	return mmGenerateToken
+}
+
+// ExpectUsernameParam2 sets up expected param username for UserService.GenerateToken
+func (mmGenerateToken *mUserServiceMockGenerateToken) ExpectUsernameParam2(username string) *mUserServiceMockGenerateToken {
+	if mmGenerateToken.mock.funcGenerateToken != nil {
+		mmGenerateToken.mock.t.Fatalf("UserServiceMock.GenerateToken mock is already set by Set")
+	}
+
+	if mmGenerateToken.defaultExpectation == nil {
+		mmGenerateToken.defaultExpectation = &UserServiceMockGenerateTokenExpectation{}
+	}
+
+	if mmGenerateToken.defaultExpectation.params != nil {
+		mmGenerateToken.mock.t.Fatalf("UserServiceMock.GenerateToken mock is already set by Expect")
+	}
+
+	if mmGenerateToken.defaultExpectation.paramPtrs == nil {
+		mmGenerateToken.defaultExpectation.paramPtrs = &UserServiceMockGenerateTokenParamPtrs{}
+	}
+	mmGenerateToken.defaultExpectation.paramPtrs.username = &username
+	mmGenerateToken.defaultExpectation.expectationOrigins.originUsername = minimock.CallerInfo(1)
+
+	return mmGenerateToken
+}
+
+// ExpectPasswordParam3 sets up expected param password for UserService.GenerateToken
+func (mmGenerateToken *mUserServiceMockGenerateToken) ExpectPasswordParam3(password string) *mUserServiceMockGenerateToken {
+	if mmGenerateToken.mock.funcGenerateToken != nil {
+		mmGenerateToken.mock.t.Fatalf("UserServiceMock.GenerateToken mock is already set by Set")
+	}
+
+	if mmGenerateToken.defaultExpectation == nil {
+		mmGenerateToken.defaultExpectation = &UserServiceMockGenerateTokenExpectation{}
+	}
+
+	if mmGenerateToken.defaultExpectation.params != nil {
+		mmGenerateToken.mock.t.Fatalf("UserServiceMock.GenerateToken mock is already set by Expect")
+	}
+
+	if mmGenerateToken.defaultExpectation.paramPtrs == nil {
+		mmGenerateToken.defaultExpectation.paramPtrs = &UserServiceMockGenerateTokenParamPtrs{}
+	}
+	mmGenerateToken.defaultExpectation.paramPtrs.password = &password
+	mmGenerateToken.defaultExpectation.expectationOrigins.originPassword = minimock.CallerInfo(1)
+
+	return mmGenerateToken
+}
+
+// Inspect accepts an inspector function that has same arguments as the UserService.GenerateToken
+func (mmGenerateToken *mUserServiceMockGenerateToken) Inspect(f func(ctx context.Context, username string, password string)) *mUserServiceMockGenerateToken {
+	if mmGenerateToken.mock.inspectFuncGenerateToken != nil {
+		mmGenerateToken.mock.t.Fatalf("Inspect function is already set for UserServiceMock.GenerateToken")
+	}
+
+	mmGenerateToken.mock.inspectFuncGenerateToken = f
+
+	return mmGenerateToken
+}
+
+// Return sets up results that will be returned by UserService.GenerateToken
+func (mmGenerateToken *mUserServiceMockGenerateToken) Return(s1 string, err error) *UserServiceMock {
+	if mmGenerateToken.mock.funcGenerateToken != nil {
+		mmGenerateToken.mock.t.Fatalf("UserServiceMock.GenerateToken mock is already set by Set")
+	}
+
+	if mmGenerateToken.defaultExpectation == nil {
+		mmGenerateToken.defaultExpectation = &UserServiceMockGenerateTokenExpectation{mock: mmGenerateToken.mock}
+	}
+	mmGenerateToken.defaultExpectation.results = &UserServiceMockGenerateTokenResults{s1, err}
+	mmGenerateToken.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
+	return mmGenerateToken.mock
+}
+
+// Set uses given function f to mock the UserService.GenerateToken method
+func (mmGenerateToken *mUserServiceMockGenerateToken) Set(f func(ctx context.Context, username string, password string) (s1 string, err error)) *UserServiceMock {
+	if mmGenerateToken.defaultExpectation != nil {
+		mmGenerateToken.mock.t.Fatalf("Default expectation is already set for the UserService.GenerateToken method")
+	}
+
+	if len(mmGenerateToken.expectations) > 0 {
+		mmGenerateToken.mock.t.Fatalf("Some expectations are already set for the UserService.GenerateToken method")
+	}
+
+	mmGenerateToken.mock.funcGenerateToken = f
+	mmGenerateToken.mock.funcGenerateTokenOrigin = minimock.CallerInfo(1)
+	return mmGenerateToken.mock
+}
+
+// When sets expectation for the UserService.GenerateToken which will trigger the result defined by the following
+// Then helper
+func (mmGenerateToken *mUserServiceMockGenerateToken) When(ctx context.Context, username string, password string) *UserServiceMockGenerateTokenExpectation {
+	if mmGenerateToken.mock.funcGenerateToken != nil {
+		mmGenerateToken.mock.t.Fatalf("UserServiceMock.GenerateToken mock is already set by Set")
+	}
+
+	expectation := &UserServiceMockGenerateTokenExpectation{
+		mock:               mmGenerateToken.mock,
+		params:             &UserServiceMockGenerateTokenParams{ctx, username, password},
+		expectationOrigins: UserServiceMockGenerateTokenExpectationOrigins{origin: minimock.CallerInfo(1)},
+	}
+	mmGenerateToken.expectations = append(mmGenerateToken.expectations, expectation)
+	return expectation
+}
+
+// Then sets up UserService.GenerateToken return parameters for the expectation previously defined by the When method
+func (e *UserServiceMockGenerateTokenExpectation) Then(s1 string, err error) *UserServiceMock {
+	e.results = &UserServiceMockGenerateTokenResults{s1, err}
+	return e.mock
+}
+
+// Times sets number of times UserService.GenerateToken should be invoked
+func (mmGenerateToken *mUserServiceMockGenerateToken) Times(n uint64) *mUserServiceMockGenerateToken {
+	if n == 0 {
+		mmGenerateToken.mock.t.Fatalf("Times of UserServiceMock.GenerateToken mock can not be zero")
+	}
+	mm_atomic.StoreUint64(&mmGenerateToken.expectedInvocations, n)
+	mmGenerateToken.expectedInvocationsOrigin = minimock.CallerInfo(1)
+	return mmGenerateToken
+}
+
+func (mmGenerateToken *mUserServiceMockGenerateToken) invocationsDone() bool {
+	if len(mmGenerateToken.expectations) == 0 && mmGenerateToken.defaultExpectation == nil && mmGenerateToken.mock.funcGenerateToken == nil {
+		return true
+	}
+
+	totalInvocations := mm_atomic.LoadUint64(&mmGenerateToken.mock.afterGenerateTokenCounter)
+	expectedInvocations := mm_atomic.LoadUint64(&mmGenerateToken.expectedInvocations)
+
+	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
+}
+
+// GenerateToken implements mm_service.UserService
+func (mmGenerateToken *UserServiceMock) GenerateToken(ctx context.Context, username string, password string) (s1 string, err error) {
+	mm_atomic.AddUint64(&mmGenerateToken.beforeGenerateTokenCounter, 1)
+	defer mm_atomic.AddUint64(&mmGenerateToken.afterGenerateTokenCounter, 1)
+
+	mmGenerateToken.t.Helper()
+
+	if mmGenerateToken.inspectFuncGenerateToken != nil {
+		mmGenerateToken.inspectFuncGenerateToken(ctx, username, password)
+	}
+
+	mm_params := UserServiceMockGenerateTokenParams{ctx, username, password}
+
+	// Record call args
+	mmGenerateToken.GenerateTokenMock.mutex.Lock()
+	mmGenerateToken.GenerateTokenMock.callArgs = append(mmGenerateToken.GenerateTokenMock.callArgs, &mm_params)
+	mmGenerateToken.GenerateTokenMock.mutex.Unlock()
+
+	for _, e := range mmGenerateToken.GenerateTokenMock.expectations {
+		if minimock.Equal(*e.params, mm_params) {
+			mm_atomic.AddUint64(&e.Counter, 1)
+			return e.results.s1, e.results.err
+		}
+	}
+
+	if mmGenerateToken.GenerateTokenMock.defaultExpectation != nil {
+		mm_atomic.AddUint64(&mmGenerateToken.GenerateTokenMock.defaultExpectation.Counter, 1)
+		mm_want := mmGenerateToken.GenerateTokenMock.defaultExpectation.params
+		mm_want_ptrs := mmGenerateToken.GenerateTokenMock.defaultExpectation.paramPtrs
+
+		mm_got := UserServiceMockGenerateTokenParams{ctx, username, password}
+
+		if mm_want_ptrs != nil {
+
+			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
+				mmGenerateToken.t.Errorf("UserServiceMock.GenerateToken got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGenerateToken.GenerateTokenMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
+			}
+
+			if mm_want_ptrs.username != nil && !minimock.Equal(*mm_want_ptrs.username, mm_got.username) {
+				mmGenerateToken.t.Errorf("UserServiceMock.GenerateToken got unexpected parameter username, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGenerateToken.GenerateTokenMock.defaultExpectation.expectationOrigins.originUsername, *mm_want_ptrs.username, mm_got.username, minimock.Diff(*mm_want_ptrs.username, mm_got.username))
+			}
+
+			if mm_want_ptrs.password != nil && !minimock.Equal(*mm_want_ptrs.password, mm_got.password) {
+				mmGenerateToken.t.Errorf("UserServiceMock.GenerateToken got unexpected parameter password, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+					mmGenerateToken.GenerateTokenMock.defaultExpectation.expectationOrigins.originPassword, *mm_want_ptrs.password, mm_got.password, minimock.Diff(*mm_want_ptrs.password, mm_got.password))
+			}
+
+		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
+			mmGenerateToken.t.Errorf("UserServiceMock.GenerateToken got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
+				mmGenerateToken.GenerateTokenMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
+		}
+
+		mm_results := mmGenerateToken.GenerateTokenMock.defaultExpectation.results
+		if mm_results == nil {
+			mmGenerateToken.t.Fatal("No results are set for the UserServiceMock.GenerateToken")
+		}
+		return (*mm_results).s1, (*mm_results).err
+	}
+	if mmGenerateToken.funcGenerateToken != nil {
+		return mmGenerateToken.funcGenerateToken(ctx, username, password)
+	}
+	mmGenerateToken.t.Fatalf("Unexpected call to UserServiceMock.GenerateToken. %v %v %v", ctx, username, password)
+	return
+}
+
+// GenerateTokenAfterCounter returns a count of finished UserServiceMock.GenerateToken invocations
+func (mmGenerateToken *UserServiceMock) GenerateTokenAfterCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGenerateToken.afterGenerateTokenCounter)
+}
+
+// GenerateTokenBeforeCounter returns a count of UserServiceMock.GenerateToken invocations
+func (mmGenerateToken *UserServiceMock) GenerateTokenBeforeCounter() uint64 {
+	return mm_atomic.LoadUint64(&mmGenerateToken.beforeGenerateTokenCounter)
+}
+
+// Calls returns a list of arguments used in each call to UserServiceMock.GenerateToken.
+// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
+func (mmGenerateToken *mUserServiceMockGenerateToken) Calls() []*UserServiceMockGenerateTokenParams {
+	mmGenerateToken.mutex.RLock()
+
+	argCopy := make([]*UserServiceMockGenerateTokenParams, len(mmGenerateToken.callArgs))
+	copy(argCopy, mmGenerateToken.callArgs)
+
+	mmGenerateToken.mutex.RUnlock()
+
+	return argCopy
+}
+
+// MinimockGenerateTokenDone returns true if the count of the GenerateToken invocations corresponds
+// the number of defined expectations
+func (m *UserServiceMock) MinimockGenerateTokenDone() bool {
+	if m.GenerateTokenMock.optional {
+		// Optional methods provide '0 or more' call count restriction.
+		return true
+	}
+
+	for _, e := range m.GenerateTokenMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			return false
+		}
+	}
+
+	return m.GenerateTokenMock.invocationsDone()
+}
+
+// MinimockGenerateTokenInspect logs each unmet expectation
+func (m *UserServiceMock) MinimockGenerateTokenInspect() {
+	for _, e := range m.GenerateTokenMock.expectations {
+		if mm_atomic.LoadUint64(&e.Counter) < 1 {
+			m.t.Errorf("Expected call to UserServiceMock.GenerateToken at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
+		}
+	}
+
+	afterGenerateTokenCounter := mm_atomic.LoadUint64(&m.afterGenerateTokenCounter)
+	// if default expectation was set then invocations count should be greater than zero
+	if m.GenerateTokenMock.defaultExpectation != nil && afterGenerateTokenCounter < 1 {
+		if m.GenerateTokenMock.defaultExpectation.params == nil {
+			m.t.Errorf("Expected call to UserServiceMock.GenerateToken at\n%s", m.GenerateTokenMock.defaultExpectation.returnOrigin)
+		} else {
+			m.t.Errorf("Expected call to UserServiceMock.GenerateToken at\n%s with params: %#v", m.GenerateTokenMock.defaultExpectation.expectationOrigins.origin, *m.GenerateTokenMock.defaultExpectation.params)
+		}
+	}
+	// if func was set then invocations count should be greater than zero
+	if m.funcGenerateToken != nil && afterGenerateTokenCounter < 1 {
+		m.t.Errorf("Expected call to UserServiceMock.GenerateToken at\n%s", m.funcGenerateTokenOrigin)
+	}
+
+	if !m.GenerateTokenMock.invocationsDone() && afterGenerateTokenCounter > 0 {
+		m.t.Errorf("Expected %d calls to UserServiceMock.GenerateToken at\n%s but found %d calls",
+			mm_atomic.LoadUint64(&m.GenerateTokenMock.expectedInvocations), m.GenerateTokenMock.expectedInvocationsOrigin, afterGenerateTokenCounter)
+	}
 }
 
 type mUserServiceMockRegister struct {
@@ -396,387 +770,13 @@ func (m *UserServiceMock) MinimockRegisterInspect() {
 	}
 }
 
-type mUserServiceMockSignin struct {
-	optional           bool
-	mock               *UserServiceMock
-	defaultExpectation *UserServiceMockSigninExpectation
-	expectations       []*UserServiceMockSigninExpectation
-
-	callArgs []*UserServiceMockSigninParams
-	mutex    sync.RWMutex
-
-	expectedInvocations       uint64
-	expectedInvocationsOrigin string
-}
-
-// UserServiceMockSigninExpectation specifies expectation struct of the UserService.Signin
-type UserServiceMockSigninExpectation struct {
-	mock               *UserServiceMock
-	params             *UserServiceMockSigninParams
-	paramPtrs          *UserServiceMockSigninParamPtrs
-	expectationOrigins UserServiceMockSigninExpectationOrigins
-	results            *UserServiceMockSigninResults
-	returnOrigin       string
-	Counter            uint64
-}
-
-// UserServiceMockSigninParams contains parameters of the UserService.Signin
-type UserServiceMockSigninParams struct {
-	ctx      context.Context
-	username string
-	password string
-}
-
-// UserServiceMockSigninParamPtrs contains pointers to parameters of the UserService.Signin
-type UserServiceMockSigninParamPtrs struct {
-	ctx      *context.Context
-	username *string
-	password *string
-}
-
-// UserServiceMockSigninResults contains results of the UserService.Signin
-type UserServiceMockSigninResults struct {
-	up1 *domain.User
-	err error
-}
-
-// UserServiceMockSigninOrigins contains origins of expectations of the UserService.Signin
-type UserServiceMockSigninExpectationOrigins struct {
-	origin         string
-	originCtx      string
-	originUsername string
-	originPassword string
-}
-
-// Marks this method to be optional. The default behavior of any method with Return() is '1 or more', meaning
-// the test will fail minimock's automatic final call check if the mocked method was not called at least once.
-// Optional() makes method check to work in '0 or more' mode.
-// It is NOT RECOMMENDED to use this option unless you really need it, as default behaviour helps to
-// catch the problems when the expected method call is totally skipped during test run.
-func (mmSignin *mUserServiceMockSignin) Optional() *mUserServiceMockSignin {
-	mmSignin.optional = true
-	return mmSignin
-}
-
-// Expect sets up expected params for UserService.Signin
-func (mmSignin *mUserServiceMockSignin) Expect(ctx context.Context, username string, password string) *mUserServiceMockSignin {
-	if mmSignin.mock.funcSignin != nil {
-		mmSignin.mock.t.Fatalf("UserServiceMock.Signin mock is already set by Set")
-	}
-
-	if mmSignin.defaultExpectation == nil {
-		mmSignin.defaultExpectation = &UserServiceMockSigninExpectation{}
-	}
-
-	if mmSignin.defaultExpectation.paramPtrs != nil {
-		mmSignin.mock.t.Fatalf("UserServiceMock.Signin mock is already set by ExpectParams functions")
-	}
-
-	mmSignin.defaultExpectation.params = &UserServiceMockSigninParams{ctx, username, password}
-	mmSignin.defaultExpectation.expectationOrigins.origin = minimock.CallerInfo(1)
-	for _, e := range mmSignin.expectations {
-		if minimock.Equal(e.params, mmSignin.defaultExpectation.params) {
-			mmSignin.mock.t.Fatalf("Expectation set by When has same params: %#v", *mmSignin.defaultExpectation.params)
-		}
-	}
-
-	return mmSignin
-}
-
-// ExpectCtxParam1 sets up expected param ctx for UserService.Signin
-func (mmSignin *mUserServiceMockSignin) ExpectCtxParam1(ctx context.Context) *mUserServiceMockSignin {
-	if mmSignin.mock.funcSignin != nil {
-		mmSignin.mock.t.Fatalf("UserServiceMock.Signin mock is already set by Set")
-	}
-
-	if mmSignin.defaultExpectation == nil {
-		mmSignin.defaultExpectation = &UserServiceMockSigninExpectation{}
-	}
-
-	if mmSignin.defaultExpectation.params != nil {
-		mmSignin.mock.t.Fatalf("UserServiceMock.Signin mock is already set by Expect")
-	}
-
-	if mmSignin.defaultExpectation.paramPtrs == nil {
-		mmSignin.defaultExpectation.paramPtrs = &UserServiceMockSigninParamPtrs{}
-	}
-	mmSignin.defaultExpectation.paramPtrs.ctx = &ctx
-	mmSignin.defaultExpectation.expectationOrigins.originCtx = minimock.CallerInfo(1)
-
-	return mmSignin
-}
-
-// ExpectUsernameParam2 sets up expected param username for UserService.Signin
-func (mmSignin *mUserServiceMockSignin) ExpectUsernameParam2(username string) *mUserServiceMockSignin {
-	if mmSignin.mock.funcSignin != nil {
-		mmSignin.mock.t.Fatalf("UserServiceMock.Signin mock is already set by Set")
-	}
-
-	if mmSignin.defaultExpectation == nil {
-		mmSignin.defaultExpectation = &UserServiceMockSigninExpectation{}
-	}
-
-	if mmSignin.defaultExpectation.params != nil {
-		mmSignin.mock.t.Fatalf("UserServiceMock.Signin mock is already set by Expect")
-	}
-
-	if mmSignin.defaultExpectation.paramPtrs == nil {
-		mmSignin.defaultExpectation.paramPtrs = &UserServiceMockSigninParamPtrs{}
-	}
-	mmSignin.defaultExpectation.paramPtrs.username = &username
-	mmSignin.defaultExpectation.expectationOrigins.originUsername = minimock.CallerInfo(1)
-
-	return mmSignin
-}
-
-// ExpectPasswordParam3 sets up expected param password for UserService.Signin
-func (mmSignin *mUserServiceMockSignin) ExpectPasswordParam3(password string) *mUserServiceMockSignin {
-	if mmSignin.mock.funcSignin != nil {
-		mmSignin.mock.t.Fatalf("UserServiceMock.Signin mock is already set by Set")
-	}
-
-	if mmSignin.defaultExpectation == nil {
-		mmSignin.defaultExpectation = &UserServiceMockSigninExpectation{}
-	}
-
-	if mmSignin.defaultExpectation.params != nil {
-		mmSignin.mock.t.Fatalf("UserServiceMock.Signin mock is already set by Expect")
-	}
-
-	if mmSignin.defaultExpectation.paramPtrs == nil {
-		mmSignin.defaultExpectation.paramPtrs = &UserServiceMockSigninParamPtrs{}
-	}
-	mmSignin.defaultExpectation.paramPtrs.password = &password
-	mmSignin.defaultExpectation.expectationOrigins.originPassword = minimock.CallerInfo(1)
-
-	return mmSignin
-}
-
-// Inspect accepts an inspector function that has same arguments as the UserService.Signin
-func (mmSignin *mUserServiceMockSignin) Inspect(f func(ctx context.Context, username string, password string)) *mUserServiceMockSignin {
-	if mmSignin.mock.inspectFuncSignin != nil {
-		mmSignin.mock.t.Fatalf("Inspect function is already set for UserServiceMock.Signin")
-	}
-
-	mmSignin.mock.inspectFuncSignin = f
-
-	return mmSignin
-}
-
-// Return sets up results that will be returned by UserService.Signin
-func (mmSignin *mUserServiceMockSignin) Return(up1 *domain.User, err error) *UserServiceMock {
-	if mmSignin.mock.funcSignin != nil {
-		mmSignin.mock.t.Fatalf("UserServiceMock.Signin mock is already set by Set")
-	}
-
-	if mmSignin.defaultExpectation == nil {
-		mmSignin.defaultExpectation = &UserServiceMockSigninExpectation{mock: mmSignin.mock}
-	}
-	mmSignin.defaultExpectation.results = &UserServiceMockSigninResults{up1, err}
-	mmSignin.defaultExpectation.returnOrigin = minimock.CallerInfo(1)
-	return mmSignin.mock
-}
-
-// Set uses given function f to mock the UserService.Signin method
-func (mmSignin *mUserServiceMockSignin) Set(f func(ctx context.Context, username string, password string) (up1 *domain.User, err error)) *UserServiceMock {
-	if mmSignin.defaultExpectation != nil {
-		mmSignin.mock.t.Fatalf("Default expectation is already set for the UserService.Signin method")
-	}
-
-	if len(mmSignin.expectations) > 0 {
-		mmSignin.mock.t.Fatalf("Some expectations are already set for the UserService.Signin method")
-	}
-
-	mmSignin.mock.funcSignin = f
-	mmSignin.mock.funcSigninOrigin = minimock.CallerInfo(1)
-	return mmSignin.mock
-}
-
-// When sets expectation for the UserService.Signin which will trigger the result defined by the following
-// Then helper
-func (mmSignin *mUserServiceMockSignin) When(ctx context.Context, username string, password string) *UserServiceMockSigninExpectation {
-	if mmSignin.mock.funcSignin != nil {
-		mmSignin.mock.t.Fatalf("UserServiceMock.Signin mock is already set by Set")
-	}
-
-	expectation := &UserServiceMockSigninExpectation{
-		mock:               mmSignin.mock,
-		params:             &UserServiceMockSigninParams{ctx, username, password},
-		expectationOrigins: UserServiceMockSigninExpectationOrigins{origin: minimock.CallerInfo(1)},
-	}
-	mmSignin.expectations = append(mmSignin.expectations, expectation)
-	return expectation
-}
-
-// Then sets up UserService.Signin return parameters for the expectation previously defined by the When method
-func (e *UserServiceMockSigninExpectation) Then(up1 *domain.User, err error) *UserServiceMock {
-	e.results = &UserServiceMockSigninResults{up1, err}
-	return e.mock
-}
-
-// Times sets number of times UserService.Signin should be invoked
-func (mmSignin *mUserServiceMockSignin) Times(n uint64) *mUserServiceMockSignin {
-	if n == 0 {
-		mmSignin.mock.t.Fatalf("Times of UserServiceMock.Signin mock can not be zero")
-	}
-	mm_atomic.StoreUint64(&mmSignin.expectedInvocations, n)
-	mmSignin.expectedInvocationsOrigin = minimock.CallerInfo(1)
-	return mmSignin
-}
-
-func (mmSignin *mUserServiceMockSignin) invocationsDone() bool {
-	if len(mmSignin.expectations) == 0 && mmSignin.defaultExpectation == nil && mmSignin.mock.funcSignin == nil {
-		return true
-	}
-
-	totalInvocations := mm_atomic.LoadUint64(&mmSignin.mock.afterSigninCounter)
-	expectedInvocations := mm_atomic.LoadUint64(&mmSignin.expectedInvocations)
-
-	return totalInvocations > 0 && (expectedInvocations == 0 || expectedInvocations == totalInvocations)
-}
-
-// Signin implements mm_service.UserService
-func (mmSignin *UserServiceMock) Signin(ctx context.Context, username string, password string) (up1 *domain.User, err error) {
-	mm_atomic.AddUint64(&mmSignin.beforeSigninCounter, 1)
-	defer mm_atomic.AddUint64(&mmSignin.afterSigninCounter, 1)
-
-	mmSignin.t.Helper()
-
-	if mmSignin.inspectFuncSignin != nil {
-		mmSignin.inspectFuncSignin(ctx, username, password)
-	}
-
-	mm_params := UserServiceMockSigninParams{ctx, username, password}
-
-	// Record call args
-	mmSignin.SigninMock.mutex.Lock()
-	mmSignin.SigninMock.callArgs = append(mmSignin.SigninMock.callArgs, &mm_params)
-	mmSignin.SigninMock.mutex.Unlock()
-
-	for _, e := range mmSignin.SigninMock.expectations {
-		if minimock.Equal(*e.params, mm_params) {
-			mm_atomic.AddUint64(&e.Counter, 1)
-			return e.results.up1, e.results.err
-		}
-	}
-
-	if mmSignin.SigninMock.defaultExpectation != nil {
-		mm_atomic.AddUint64(&mmSignin.SigninMock.defaultExpectation.Counter, 1)
-		mm_want := mmSignin.SigninMock.defaultExpectation.params
-		mm_want_ptrs := mmSignin.SigninMock.defaultExpectation.paramPtrs
-
-		mm_got := UserServiceMockSigninParams{ctx, username, password}
-
-		if mm_want_ptrs != nil {
-
-			if mm_want_ptrs.ctx != nil && !minimock.Equal(*mm_want_ptrs.ctx, mm_got.ctx) {
-				mmSignin.t.Errorf("UserServiceMock.Signin got unexpected parameter ctx, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-					mmSignin.SigninMock.defaultExpectation.expectationOrigins.originCtx, *mm_want_ptrs.ctx, mm_got.ctx, minimock.Diff(*mm_want_ptrs.ctx, mm_got.ctx))
-			}
-
-			if mm_want_ptrs.username != nil && !minimock.Equal(*mm_want_ptrs.username, mm_got.username) {
-				mmSignin.t.Errorf("UserServiceMock.Signin got unexpected parameter username, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-					mmSignin.SigninMock.defaultExpectation.expectationOrigins.originUsername, *mm_want_ptrs.username, mm_got.username, minimock.Diff(*mm_want_ptrs.username, mm_got.username))
-			}
-
-			if mm_want_ptrs.password != nil && !minimock.Equal(*mm_want_ptrs.password, mm_got.password) {
-				mmSignin.t.Errorf("UserServiceMock.Signin got unexpected parameter password, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-					mmSignin.SigninMock.defaultExpectation.expectationOrigins.originPassword, *mm_want_ptrs.password, mm_got.password, minimock.Diff(*mm_want_ptrs.password, mm_got.password))
-			}
-
-		} else if mm_want != nil && !minimock.Equal(*mm_want, mm_got) {
-			mmSignin.t.Errorf("UserServiceMock.Signin got unexpected parameters, expected at\n%s:\nwant: %#v\n got: %#v%s\n",
-				mmSignin.SigninMock.defaultExpectation.expectationOrigins.origin, *mm_want, mm_got, minimock.Diff(*mm_want, mm_got))
-		}
-
-		mm_results := mmSignin.SigninMock.defaultExpectation.results
-		if mm_results == nil {
-			mmSignin.t.Fatal("No results are set for the UserServiceMock.Signin")
-		}
-		return (*mm_results).up1, (*mm_results).err
-	}
-	if mmSignin.funcSignin != nil {
-		return mmSignin.funcSignin(ctx, username, password)
-	}
-	mmSignin.t.Fatalf("Unexpected call to UserServiceMock.Signin. %v %v %v", ctx, username, password)
-	return
-}
-
-// SigninAfterCounter returns a count of finished UserServiceMock.Signin invocations
-func (mmSignin *UserServiceMock) SigninAfterCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmSignin.afterSigninCounter)
-}
-
-// SigninBeforeCounter returns a count of UserServiceMock.Signin invocations
-func (mmSignin *UserServiceMock) SigninBeforeCounter() uint64 {
-	return mm_atomic.LoadUint64(&mmSignin.beforeSigninCounter)
-}
-
-// Calls returns a list of arguments used in each call to UserServiceMock.Signin.
-// The list is in the same order as the calls were made (i.e. recent calls have a higher index)
-func (mmSignin *mUserServiceMockSignin) Calls() []*UserServiceMockSigninParams {
-	mmSignin.mutex.RLock()
-
-	argCopy := make([]*UserServiceMockSigninParams, len(mmSignin.callArgs))
-	copy(argCopy, mmSignin.callArgs)
-
-	mmSignin.mutex.RUnlock()
-
-	return argCopy
-}
-
-// MinimockSigninDone returns true if the count of the Signin invocations corresponds
-// the number of defined expectations
-func (m *UserServiceMock) MinimockSigninDone() bool {
-	if m.SigninMock.optional {
-		// Optional methods provide '0 or more' call count restriction.
-		return true
-	}
-
-	for _, e := range m.SigninMock.expectations {
-		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			return false
-		}
-	}
-
-	return m.SigninMock.invocationsDone()
-}
-
-// MinimockSigninInspect logs each unmet expectation
-func (m *UserServiceMock) MinimockSigninInspect() {
-	for _, e := range m.SigninMock.expectations {
-		if mm_atomic.LoadUint64(&e.Counter) < 1 {
-			m.t.Errorf("Expected call to UserServiceMock.Signin at\n%s with params: %#v", e.expectationOrigins.origin, *e.params)
-		}
-	}
-
-	afterSigninCounter := mm_atomic.LoadUint64(&m.afterSigninCounter)
-	// if default expectation was set then invocations count should be greater than zero
-	if m.SigninMock.defaultExpectation != nil && afterSigninCounter < 1 {
-		if m.SigninMock.defaultExpectation.params == nil {
-			m.t.Errorf("Expected call to UserServiceMock.Signin at\n%s", m.SigninMock.defaultExpectation.returnOrigin)
-		} else {
-			m.t.Errorf("Expected call to UserServiceMock.Signin at\n%s with params: %#v", m.SigninMock.defaultExpectation.expectationOrigins.origin, *m.SigninMock.defaultExpectation.params)
-		}
-	}
-	// if func was set then invocations count should be greater than zero
-	if m.funcSignin != nil && afterSigninCounter < 1 {
-		m.t.Errorf("Expected call to UserServiceMock.Signin at\n%s", m.funcSigninOrigin)
-	}
-
-	if !m.SigninMock.invocationsDone() && afterSigninCounter > 0 {
-		m.t.Errorf("Expected %d calls to UserServiceMock.Signin at\n%s but found %d calls",
-			mm_atomic.LoadUint64(&m.SigninMock.expectedInvocations), m.SigninMock.expectedInvocationsOrigin, afterSigninCounter)
-	}
-}
-
 // MinimockFinish checks that all mocked methods have been called the expected number of times
 func (m *UserServiceMock) MinimockFinish() {
 	m.finishOnce.Do(func() {
 		if !m.minimockDone() {
-			m.MinimockRegisterInspect()
+			m.MinimockGenerateTokenInspect()
 
-			m.MinimockSigninInspect()
+			m.MinimockRegisterInspect()
 		}
 	})
 }
@@ -800,6 +800,6 @@ func (m *UserServiceMock) MinimockWait(timeout mm_time.Duration) {
 func (m *UserServiceMock) minimockDone() bool {
 	done := true
 	return done &&
-		m.MinimockRegisterDone() &&
-		m.MinimockSigninDone()
+		m.MinimockGenerateTokenDone() &&
+		m.MinimockRegisterDone()
 }
